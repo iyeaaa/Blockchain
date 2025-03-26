@@ -9,9 +9,25 @@ class Blockchain:
 
     def __init__(self):
         self.chain = []
-        self.create_block(proof = 1, previous_hash = '0')
+        self.append_block(proof = 1, previous_hash = '0')
 
-    def create_block(self, proof, previous_hash):
+    def create_block(self):
+        # 이전블록의 작업증명 불러오기
+        previous_block = blockchain.get_previous_block()
+        previous_proof = previous_block['proof']
+
+        # proof 찾기
+        proof = blockchain.proof_of_work(previous_proof)
+
+        # hash값 찾기
+        previous_hash = blockchain.hash(previous_block)
+
+        # 블록을 블록체인에 추가
+        block = blockchain.append_block(proof, previous_hash)
+
+        return block
+
+    def append_block(self, proof, previous_hash):
         block = { 'index': len(self.chain) + 1,
                   'timestamp': str(datetime.datetime.now()),
                   'proof': proof,
@@ -71,16 +87,12 @@ blockchain = Blockchain()
 
 @app.route('/mine_block', methods = ['GET'])
 def mine_block():
-    previous_block = blockchain.get_previous_block()
-    previous_proof = previous_block['proof']
-    proof = blockchain.proof_of_work(previous_proof)
-    previous_hash = blockchain.hash(previous_block)
-    block = blockchain.create_block(proof, previous_hash)
-    response = {'message': 'Congratulations, you just mined a block!',
-                 'index': block['index'],
-                 'timestamp': block['timestamp'],
-                 'proof': block['proof'],
-                 'previous_hash': block['previous_hash']}
+    block = blockchain.create_block()
+    response = {'message': 'Congratulations, you just mined a block!'}
+
+    for k, v in block.items():
+        response[k] = v
+
     return jsonify(response), 200
 
 
