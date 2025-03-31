@@ -1,14 +1,16 @@
 import datetime
 import hashlib
 import json
-from http.client import responses
-
 from flask import Flask, jsonify
+import requests
+from uuid import uuid4
+from urllib.parse import urlparse
 
 class Blockchain:
 
     def __init__(self):
         self.chain = []
+        self.transactions = []
         self.append_block(proof = 1, previous_hash = '0')
 
     def create_block(self):
@@ -31,8 +33,9 @@ class Blockchain:
         block = { 'index': len(self.chain) + 1,
                   'timestamp': str(datetime.datetime.now()),
                   'proof': proof,
-                  'previous_hash': previous_hash }
-
+                  'previous_hash': previous_hash,
+                  'transactions': self.transactions}
+        self.transactions = []
         self.chain.append(block)
         return block
 
@@ -79,6 +82,12 @@ class Blockchain:
             block_index += 1
 
         return True
+
+    def add_transaction(self, sender, receiver, amount):
+        self.transactions.append({'sender': sender,
+                                  'receiver': receiver,
+                                  'amount': amount})
+        return self.get_previous_block()['index'] + 1
 
 app = Flask(__name__)
 app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
